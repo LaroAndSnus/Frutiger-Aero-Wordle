@@ -271,318 +271,318 @@
     <div id="toast" class="toast">Скопировано!</div>
 
     <script>
-        // --- Музыка и Звуки ---
-        function playBubble() {
-            const sound = document.getElementById("sound-bubble");
-            sound.currentTime = 0;
-            sound.play().catch(()=>{});
+// --- Музыка и Звуки ---
+    function playBubble() {
+        const sound = document.getElementById("sound-bubble");
+        sound.currentTime = 0;
+        sound.play().catch(()=>{});
+    }
+
+    function playEndSound() {
+        const sound = document.getElementById("sound-end");
+        sound.currentTime = 0;
+        sound.play().catch(()=>{});
+    }
+
+    document.body.addEventListener('click', () => {
+        const music = document.getElementById("bg-music");
+        if (music.paused) {
+            music.volume = 0.5;
+            music.play().catch(()=>{});
         }
+    }, { once: true });
 
-        function playEndSound() {
-            const sound = document.getElementById("sound-end");
-            sound.currentTime = 0;
-            sound.play().catch(()=>{});
-        }
+    // --- Фоны ---
+    const backgrounds = [
+        "https://frutigeraeroarchive.org/images/wallpapers/asadal_stock/asadal_stock_15.jpg",
+        "https://frutigeraeroarchive.org/images/wallpapers/asadal_stock/asadal_stock_10.jpg",
+        "https://frutigeraeroarchive.org/images/wallpapers/asadal_stock/asadal_stock_14.jpg",
+        "https://frutigeraeroarchive.org/images/wallpapers/asadal_stock/asadal_stock_17.jpg",
+        "https://frutigeraeroarchive.org/images/wallpapers/asadal_stock/asadal_stock_18.jpg",
+        "https://frutigeraeroarchive.org/images/wallpapers/asadal_stock/asadal_stock_30.jpg",
+        "https://frutigeraeroarchive.org/images/wallpapers/asadal_stock/asadal_stock_57.jpg"
+    ];
+    let currentBgIndex = 0;
+    document.body.style.backgroundImage = `url('${backgrounds[currentBgIndex]}')`;
 
-        // Попытка запустить музыку при любом первом клике (обход блокировки браузера)
-        document.body.addEventListener('click', () => {
-            const music = document.getElementById("bg-music");
-            if (music.paused) {
-                music.volume = 0.5;
-                music.play().catch(()=>{});
-            }
-        }, { once: true });
-
-        // --- Фоны ---
-        const backgrounds = [
-            "https://frutigeraeroarchive.org/images/wallpapers/asadal_stock/asadal_stock_15.jpg",
-            "https://frutigeraeroarchive.org/images/wallpapers/asadal_stock/asadal_stock_10.jpg",
-            "https://frutigeraeroarchive.org/images/wallpapers/asadal_stock/asadal_stock_14.jpg",
-            "https://frutigeraeroarchive.org/images/wallpapers/asadal_stock/asadal_stock_17.jpg",
-            "https://frutigeraeroarchive.org/images/wallpapers/asadal_stock/asadal_stock_18.jpg",
-            "https://frutigeraeroarchive.org/images/wallpapers/asadal_stock/asadal_stock_30.jpg",
-            "https://frutigeraeroarchive.org/images/wallpapers/asadal_stock/asadal_stock_57.jpg"
-        ];
-        let currentBgIndex = 0;
+    function changeBackground() {
+        currentBgIndex = (currentBgIndex + 1) % backgrounds.length;
         document.body.style.backgroundImage = `url('${backgrounds[currentBgIndex]}')`;
+    }
 
-        function changeBackground() {
-            currentBgIndex = (currentBgIndex + 1) % backgrounds.length;
-            document.body.style.backgroundImage = `url('${backgrounds[currentBgIndex]}')`;
+    // --- Игровые переменные ---
+    let targetWord = "";
+    let wordLength = 0;
+    let currentRow = 0;
+    let currentCol = 0;
+    let gameOver = false;
+    let isAnimating = false; // <-- НОВАЯ ПЕРЕМЕННАЯ ДЛЯ БЛОКИРОВКИ
+    const maxGuesses = 6;
+
+    // --- Навигация ---
+    function hideAll() {
+        document.getElementById('main-menu').style.display = 'none';
+        document.getElementById('friend-menu').style.display = 'none';
+        document.getElementById('game-board').style.display = 'none';
+        document.getElementById('keyboard').style.display = 'none';
+        document.getElementById('back-btn').style.display = 'none';
+        document.getElementById('message').innerText = "";
+    }
+
+    function goToMenu() {
+        hideAll();
+        document.getElementById('main-menu').style.display = 'flex';
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    function openFriendMenu() {
+        hideAll();
+        document.getElementById('friend-menu').style.display = 'flex';
+        document.getElementById('back-btn').style.display = 'block';
+        document.getElementById('link-output').style.display = 'none';
+        document.getElementById('copy-btn').style.display = 'none';
+        document.getElementById('friend-word').value = '';
+    }
+
+    // --- Режим с другом ---
+    function generateLink() {
+        let word = document.getElementById('friend-word').value.toLowerCase().trim();
+        if (/\s/.test(word) || !/^[а-яё]+$/.test(word)) {
+            showMessage("Только русские буквы, без пробелов!");
+            return;
         }
-
-        // --- Игровые переменные ---
-        let targetWord = "";
-        let wordLength = 0;
-        let currentRow = 0;
-        let currentCol = 0;
-        let gameOver = false;
-        const maxGuesses = 6;
-
-        // --- Навигация ---
-        function hideAll() {
-            document.getElementById('main-menu').style.display = 'none';
-            document.getElementById('friend-menu').style.display = 'none';
-            document.getElementById('game-board').style.display = 'none';
-            document.getElementById('keyboard').style.display = 'none';
-            document.getElementById('back-btn').style.display = 'none';
-            document.getElementById('message').innerText = "";
+        if (word.length < 3 || word.length > 15) {
+            showMessage("Слово должно быть от 3 до 15 букв!");
+            return;
         }
+        
+        const encodedWord = btoa(encodeURIComponent(word));
+        const link = window.location.origin + window.location.pathname + "?word=" + encodedWord;
+        
+        const output = document.getElementById('link-output');
+        output.innerText = link;
+        output.style.display = 'block';
+        document.getElementById('copy-btn').style.display = 'inline-block';
+        showMessage("");
+    }
 
-        function goToMenu() {
-            hideAll();
-            document.getElementById('main-menu').style.display = 'flex';
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
+    function copyLink() {
+        const linkText = document.getElementById('link-output').innerText;
+        navigator.clipboard.writeText(linkText).then(() => {
+            const toast = document.getElementById('toast');
+            toast.style.opacity = 1;
+            setTimeout(() => toast.style.opacity = 0, 2000);
+        });
+    }
 
-        function openFriendMenu() {
-            hideAll();
-            document.getElementById('friend-menu').style.display = 'flex';
-            document.getElementById('back-btn').style.display = 'block';
-            document.getElementById('link-output').style.display = 'none';
-            document.getElementById('copy-btn').style.display = 'none';
-            document.getElementById('friend-word').value = '';
-        }
-
-        // --- Режим с другом ---
-        function generateLink() {
-            let word = document.getElementById('friend-word').value.toLowerCase().trim();
-            // Проверка на пробелы и недопустимые символы
-            if (/\s/.test(word) || !/^[а-яё]+$/.test(word)) {
-                showMessage("Только русские буквы, без пробелов!");
-                return;
-            }
-            if (word.length < 3 || word.length > 15) {
-                showMessage("Слово должно быть от 3 до 15 букв!");
-                return;
-            }
-            
-            const encodedWord = btoa(encodeURIComponent(word));
-            const link = window.location.origin + window.location.pathname + "?word=" + encodedWord;
-            
-            const output = document.getElementById('link-output');
-            output.innerText = link;
-            output.style.display = 'block';
-            document.getElementById('copy-btn').style.display = 'inline-block';
-            showMessage("");
-        }
-
-        function copyLink() {
-            const linkText = document.getElementById('link-output').innerText;
-            navigator.clipboard.writeText(linkText).then(() => {
-                const toast = document.getElementById('toast');
-                toast.style.opacity = 1;
-                setTimeout(() => toast.style.opacity = 0, 2000);
-            });
-        }
-
-        window.onload = () => {
-            const params = new URLSearchParams(window.location.search);
-            const encodedWord = params.get('word');
-            if (encodedWord) {
-                try {
-                    const decodedWord = decodeURIComponent(atob(encodedWord));
-                    if (decodedWord.length >= 3 && decodedWord.length <= 15) {
-                        startCustomGame(decodedWord);
-                    }
-                } catch (e) {
-                    console.error("Неверный формат слова в ссылке");
+    window.onload = () => {
+        const params = new URLSearchParams(window.location.search);
+        const encodedWord = params.get('word');
+        if (encodedWord) {
+            try {
+                const decodedWord = decodeURIComponent(atob(encodedWord));
+                if (decodedWord.length >= 3 && decodedWord.length <= 15) {
+                    startCustomGame(decodedWord);
                 }
-            }
-        };
-
-        // --- Логика игры ---
-        function startSinglePlayer() {
-            // Проверяем, загрузился ли массив dictionary из words.js
-            if (typeof dictionary === 'undefined' || dictionary.length === 0) {
-                showMessage("Ошибка: файл words.js не найден или пуст!");
-                return;
-            }
-            targetWord = dictionary[Math.floor(Math.random() * dictionary.length)].toLowerCase();
-            initGame();
-        }
-
-        function startCustomGame(word) {
-            targetWord = word.toLowerCase();
-            initGame();
-        }
-
-        function initGame() {
-            wordLength = targetWord.length;
-            hideAll();
-            
-            const board = document.getElementById('game-board');
-            board.style.display = 'grid';
-            // Передаем длину слова в CSS для колонок
-            board.style.setProperty('--word-length', wordLength); 
-            
-            document.getElementById('keyboard').style.display = 'flex';
-            document.getElementById('back-btn').style.display = 'block';
-            
-            currentRow = 0;
-            currentCol = 0;
-            gameOver = false;
-            
-            buildBoard();
-            buildKeyboard();
-            
-            document.removeEventListener("keydown", handlePhysicalKeyboard);
-            document.addEventListener("keydown", handlePhysicalKeyboard);
-        }
-
-        function buildBoard() {
-            const board = document.getElementById("game-board");
-            board.innerHTML = "";
-            for (let r = 0; r < maxGuesses; r++) {
-                const row = document.createElement("div");
-                row.className = "row";
-                row.id = `row-${r}`;
-                for (let c = 0; c < wordLength; c++) {
-                    const cell = document.createElement("div");
-                    cell.className = "cell";
-                    cell.id = `cell-${r}-${c}`;
-                    row.appendChild(cell);
-                }
-                board.appendChild(row);
+            } catch (e) {
+                console.error("Неверный формат слова в ссылке");
             }
         }
+    };
 
-        function buildKeyboard() {
-            const keyboard = document.getElementById("keyboard");
-            keyboard.innerHTML = "";
-            const layout = [
-                ["й", "ц", "у", "к", "е", "н", "г", "ш", "щ", "з", "х", "ъ"],
-                ["ф", "ы", "в", "а", "п", "р", "о", "л", "д", "ж", "э"],
-                ["ENTER", "я", "ч", "с", "м", "и", "т", "ь", "б", "ю", "⌫"]
-            ];
-
-            layout.forEach(rowKeys => {
-                const rowEl = document.createElement("div");
-                rowEl.className = "key-row";
-                rowKeys.forEach(key => {
-                    const keyEl = document.createElement("button");
-                    keyEl.className = "key";
-                    keyEl.textContent = key;
-                    keyEl.id = `key-${key}`;
-                    if (key === "ENTER" || key === "⌫") keyEl.classList.add("large");
-                    
-                    keyEl.onclick = () => handleInput(key);
-                    rowEl.appendChild(keyEl);
-                });
-                keyboard.appendChild(rowEl);
-            });
+    // --- Логика игры ---
+    function startSinglePlayer() {
+        if (typeof dictionary === 'undefined' || dictionary.length === 0) {
+            showMessage("Ошибка: файл words.js не найден или пуст!");
+            return;
         }
+        targetWord = dictionary[Math.floor(Math.random() * dictionary.length)].toLowerCase();
+        initGame();
+    }
 
-        function handlePhysicalKeyboard(e) {
-            if (gameOver) return;
-            const key = e.key.toLowerCase();
-            if (key === "enter") handleInput("ENTER");
-            else if (key === "backspace") handleInput("⌫");
-            // Блокируем ввод пробелов (разрешены только русские буквы)
-            else if (/^[а-яё]$/.test(key)) handleInput(key);
-        }
+    function startCustomGame(word) {
+        targetWord = word.toLowerCase();
+        initGame();
+    }
 
-        function handleInput(key) {
-            if (gameOver) return;
+    function initGame() {
+        wordLength = targetWord.length;
+        hideAll();
+        
+        const board = document.getElementById('game-board');
+        board.style.display = 'grid';
+        board.style.setProperty('--word-length', wordLength); 
+        
+        document.getElementById('keyboard').style.display = 'flex';
+        document.getElementById('back-btn').style.display = 'block';
+        
+        currentRow = 0;
+        currentCol = 0;
+        gameOver = false;
+        isAnimating = false; // Сбрасываем блокировку при старте
+        
+        buildBoard();
+        buildKeyboard();
+        
+        document.removeEventListener("keydown", handlePhysicalKeyboard);
+        document.addEventListener("keydown", handlePhysicalKeyboard);
+    }
 
-            if (key === "⌫") {
-                if (currentCol > 0) {
-                    currentCol--;
-                    const cell = document.getElementById(`cell-${currentRow}-${currentCol}`);
-                    cell.textContent = "";
-                }
-                return;
-            }
-
-            if (key === "ENTER") {
-                // Проверка на пустые клетки (слово должно быть введено полностью)
-                if (currentCol === wordLength) {
-                    checkWord();
-                } else {
-                    showMessage("Заполните все пустые клетки");
-                }
-                return;
-            }
-
-            if (currentCol < wordLength) {
-                const cell = document.getElementById(`cell-${currentRow}-${currentCol}`);
-                cell.textContent = key;
-                currentCol++;
-            }
-        }
-
-        function showMessage(msg) {
-            document.getElementById("message").textContent = msg;
-            if(msg !== "") {
-                setTimeout(() => {
-                    if(!gameOver) document.getElementById("message").textContent = "";
-                }, 2000);
-            }
-        }
-
-        function checkWord() {
-            let guess = "";
+    function buildBoard() {
+        const board = document.getElementById("game-board");
+        board.innerHTML = "";
+        for (let r = 0; r < maxGuesses; r++) {
+            const row = document.createElement("div");
+            row.className = "row";
+            row.id = `row-${r}`;
             for (let c = 0; c < wordLength; c++) {
-                guess += document.getElementById(`cell-${currentRow}-${c}`).textContent;
+                const cell = document.createElement("div");
+                cell.className = "cell";
+                cell.id = `cell-${r}-${c}`;
+                row.appendChild(cell);
             }
+            board.appendChild(row);
+        }
+    }
 
-            let targetLetters = targetWord.split("");
-            let guessLetters = guess.split("");
-            let colors = new Array(wordLength).fill("absent");
+    function buildKeyboard() {
+        const keyboard = document.getElementById("keyboard");
+        keyboard.innerHTML = "";
+        const layout = [
+            ["й", "ц", "у", "к", "е", "н", "г", "ш", "щ", "з", "х", "ъ"],
+            ["ф", "ы", "в", "а", "п", "р", "о", "л", "д", "ж", "э"],
+            ["ENTER", "я", "ч", "с", "м", "и", "т", "ь", "б", "ю", "⌫"]
+        ];
 
-            for (let i = 0; i < wordLength; i++) {
-                if (guessLetters[i] === targetLetters[i]) {
-                    colors[i] = "correct";
-                    targetLetters[i] = null; 
-                }
+        layout.forEach(rowKeys => {
+            const rowEl = document.createElement("div");
+            rowEl.className = "key-row";
+            rowKeys.forEach(key => {
+                const keyEl = document.createElement("button");
+                keyEl.className = "key";
+                keyEl.textContent = key;
+                keyEl.id = `key-${key}`;
+                if (key === "ENTER" || key === "⌫") keyEl.classList.add("large");
+                
+                keyEl.onclick = () => handleInput(key);
+                rowEl.appendChild(keyEl);
+            });
+            keyboard.appendChild(rowEl);
+        });
+    }
+
+    function handlePhysicalKeyboard(e) {
+        if (gameOver || isAnimating) return; // <-- ЕСЛИ АНИМАЦИЯ ИДЕТ, ИГНОРИРУЕМ НАЖАТИЯ
+        const key = e.key.toLowerCase();
+        if (key === "enter") handleInput("ENTER");
+        else if (key === "backspace") handleInput("⌫");
+        else if (/^[а-яё]$/.test(key)) handleInput(key);
+    }
+
+    function handleInput(key) {
+        if (gameOver || isAnimating) return; // <-- ЕСЛИ АНИМАЦИЯ ИДЕТ, ИГНОРИРУЕМ НАЖАТИЯ
+
+        if (key === "⌫") {
+            if (currentCol > 0) {
+                currentCol--;
+                const cell = document.getElementById(`cell-${currentRow}-${currentCol}`);
+                cell.textContent = "";
             }
+            return;
+        }
 
-            for (let i = 0; i < wordLength; i++) {
-                if (colors[i] === "correct") continue;
-                let index = targetLetters.indexOf(guessLetters[i]);
-                if (index !== -1) {
-                    colors[i] = "present";
-                    targetLetters[index] = null;
-                }
+        if (key === "ENTER") {
+            if (currentCol === wordLength) {
+                checkWord();
+            } else {
+                showMessage("Заполните все пустые клетки");
             }
+            return;
+        }
 
-            for (let i = 0; i < wordLength; i++) {
-                setTimeout(() => {
-                    const cell = document.getElementById(`cell-${currentRow}-${i}`);
-                    cell.classList.add(colors[i]);
-                    updateKeyboardColor(guessLetters[i], colors[i]);
-                }, i * 200);
-            }
+        if (currentCol < wordLength) {
+            const cell = document.getElementById(`cell-${currentRow}-${currentCol}`);
+            cell.textContent = key;
+            currentCol++;
+        }
+    }
 
+    function showMessage(msg) {
+        document.getElementById("message").textContent = msg;
+        if(msg !== "") {
             setTimeout(() => {
-                if (guess === targetWord) {
-                    showMessage("Великолепно! 🎉");
-                    playEndSound();
-                    gameOver = true;
-                    return;
-                }
+                if(!gameOver) document.getElementById("message").textContent = "";
+            }, 2000);
+        }
+    }
 
-                currentRow++;
-                currentCol = 0;
+    function checkWord() {
+        isAnimating = true; // <-- ВКЛЮЧАЕМ БЛОКИРОВКУ
 
-                if (currentRow === maxGuesses) {
-                    showMessage(`Игра окончена! Было слово: ${targetWord.toUpperCase()}`);
-                    playEndSound();
-                    gameOver = true;
-                }
-            }, wordLength * 200 + 100);
+        let guess = "";
+        for (let c = 0; c < wordLength; c++) {
+            guess += document.getElementById(`cell-${currentRow}-${c}`).textContent;
         }
 
-        function updateKeyboardColor(letter, colorClass) {
-            const keyEl = document.getElementById(`key-${letter}`);
-            if (!keyEl) return;
-            
-            if (keyEl.classList.contains("correct")) return;
-            if (keyEl.classList.contains("present") && colorClass === "absent") return;
-            
-            keyEl.classList.remove("present", "absent", "correct");
-            keyEl.classList.add(colorClass);
+        let targetLetters = targetWord.split("");
+        let guessLetters = guess.split("");
+        let colors = new Array(wordLength).fill("absent");
+
+        for (let i = 0; i < wordLength; i++) {
+            if (guessLetters[i] === targetLetters[i]) {
+                colors[i] = "correct";
+                targetLetters[i] = null; 
+            }
         }
+
+        for (let i = 0; i < wordLength; i++) {
+            if (colors[i] === "correct") continue;
+            let index = targetLetters.indexOf(guessLetters[i]);
+            if (index !== -1) {
+                colors[i] = "present";
+                targetLetters[index] = null;
+            }
+        }
+
+        for (let i = 0; i < wordLength; i++) {
+            setTimeout(() => {
+                const cell = document.getElementById(`cell-${currentRow}-${i}`);
+                cell.classList.add(colors[i]);
+                updateKeyboardColor(guessLetters[i], colors[i]);
+            }, i * 200);
+        }
+
+        setTimeout(() => {
+            isAnimating = false; // <-- ОТКЛЮЧАЕМ БЛОКИРОВКУ, КОГДА АНИМАЦИЯ ЗАКОНЧИЛАСЬ
+
+            if (guess === targetWord) {
+                showMessage("Великолепно! 🎉");
+                playEndSound();
+                gameOver = true;
+                return;
+            }
+
+            currentRow++;
+            currentCol = 0;
+
+            if (currentRow === maxGuesses) {
+                showMessage(`Игра окончена! Было слово: ${targetWord.toUpperCase()}`);
+                playEndSound();
+                gameOver = true;
+            }
+        }, wordLength * 200 + 100);
+    }
+
+    function updateKeyboardColor(letter, colorClass) {
+        const keyEl = document.getElementById(`key-${letter}`);
+        if (!keyEl) return;
+        
+        if (keyEl.classList.contains("correct")) return;
+        if (keyEl.classList.contains("present") && colorClass === "absent") return;
+        
+        keyEl.classList.remove("present", "absent", "correct");
+        keyEl.classList.add(colorClass);
+    }
     </script>
 </body>
 </html>
